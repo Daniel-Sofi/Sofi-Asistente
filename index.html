@@ -472,7 +472,15 @@
     let documentos = pegado;
     if (archivos.length) { const t = await leerArchivos(); documentos = t + (pegado ? '\n\n'+pegado : ''); }
     try {
-      const res = await fetch(WEBHOOK_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({materia,tema,documentos}) });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      const res = await fetch(WEBHOOK_URL, { 
+        method:'POST', 
+        headers:{'Content-Type':'application/json'}, 
+        body: JSON.stringify({materia,tema,documentos}),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
       if (!res.ok) throw new Error(`Error ${res.status}`);
       const data = await res.json();
       guiaGenerada = data.guia_de_estudio || 'No se pudo generar la guía.';
